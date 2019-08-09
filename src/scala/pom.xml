@@ -90,33 +90,6 @@
                         <goal>compile</goal>
                     </goals>
                 </execution>
-                <execution>
-                    <id>scala-test-compile</id>
-                    <phase>process-test-resources</phase>
-                    <goals>
-                        <goal>testCompile</goal>
-                    </goals>
-                </execution>
-            </executions>
-        </plugin>
-        <!-- enable scalatest -->
-        <plugin>
-            <groupId>org.scalatest</groupId>
-            <artifactId>scalatest-maven-plugin</artifactId>
-            <version>1.0</version>
-            <configuration>
-                <reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
-                <junitxml>.</junitxml>
-                <filereports>F TestSuite.txt</filereports>
-                <argLine>-Xmx512m</argLine>
-            </configuration>
-            <executions>
-                <execution>
-                    <id>test</id>
-                    <goals>
-                        <goal>test</goal>
-                    </goals>
-                </execution>
             </executions>
         </plugin>
     </plugins>
