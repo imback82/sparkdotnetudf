@@ -17,7 +17,7 @@ What we need is `serializedUdf` and `udfReturneType`.
 
 4. Check `/src/scala/src/main/scala/App.scala` to see how the C# UDF is injected.
 5. Run `mvn package` from `/src/scala` and it should produce `/src/scala/target/sparkdotnetudf-1.0-SNAPSHOT.jar`.
-6. Copy the `UdfSerializer.dll` built in 3) to the current working directory (run from the root of the repor). This step is important since this dll will contatin the IL bytes for the UDF defined.
+6. Copy the `UdfSerializer.dll` built in 3) to the current working directory (run from the root of the repo). This step is important since this dll will contatin the IL bytes for the UDF defined.
 ```
 copy src\csharp\UdfSerializer\bin\Debug\netcoreapp2.2\UdfSerializer.dll .
 ```
