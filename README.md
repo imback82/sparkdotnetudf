@@ -1,6 +1,6 @@
 # sparkdotnetudf
 
-This tool allows C# UDF to be registered to Java/Scala version of Apache Spark.
+This tool allows C# UDF to be registered and invoked from Scala or Python in Apache Spark.
 
 1. Open `/src/csharp/UdfSerializer.sln`.
 2. Update UDF definition defined in `Main` in `Program.cs`. The example used througout the instruction is the following:
@@ -15,23 +15,52 @@ udfReturnType="string"
 ```
 What we need is `serializedUdf` and `udfReturneType`.
 
-4. Check `/src/scala/src/main/scala/App.scala` to see how the C# UDF is injected.
-5. Run `mvn package` from `/src/scala` and it should produce `/src/scala/target/sparkdotnetudf-1.0-SNAPSHOT.jar`.
-6. Copy the `UdfSerializer.dll` built in 3) to the current working directory (run from the root of the repo). This step is important since this dll will contatin the IL bytes for the UDF defined.
+## Invoke C# UDF from Scala
+
+1. Check `/src/scala/src/main/scala/App.scala` to see how the C# UDF is injected.
+2. Run `mvn package` from `/src/scala` and it should produce `/src/scala/target/sparkdotnetudf-1.0-SNAPSHOT.jar`.
+3. Copy the `UdfSerializer.dll` built in 3) to the current working directory (run from the root of the repo). This step is important since this dll will contatin the IL bytes for the UDF defined.
 ```
-copy src\csharp\UdfSerializer\bin\Debug\netcoreapp2.2\UdfSerializer.dll .
+cp src\csharp\UdfSerializer\bin\Debug\netcoreapp3.1\UdfSerializer.dll .
 ```
-7. Download and unzip the worker binaries from https://github.com/dotnet/spark/releases/tag/v0.4.0. I used .NET Core for Windows for this example and unzipped to c:\dotnet-spark-worker.
-8. Run the following `spark-submit` (run from the root of the repo):
+4. Download and unzip the worker binaries from https://github.com/dotnet/spark/releases/tag/v0.12.1. I used .NET Core for Windows for this example and unzipped to c:\dotnet-spark-worker.
+5. Run the following `spark-submit` (run from the root of the repo):
 ```
 %SPARK_HOME%\bin\spark-submit.cmd \
 --class org.apache.spark.sql.App src\scala\target\sparkdotnetudf-1.0-SNAPSHOT.jar \
 AAAAA1JvdwAAAANSb3cAAAABTgAABnsAAQAAAP////8BAAAAAAAAAAwCAAAAUk1pY3Jvc29mdC5TcGFyaywgVmVyc2lvbj0wLjQuMC4wLCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPWNjN2IxM2ZmY2QyZGRkNTEFAQAAADFNaWNyb3NvZnQuU3BhcmsuVXRpbHMuQ29tbWFuZFNlckRlK1VkZldyYXBwZXJEYXRhAgAAACA8VWRmV3JhcHBlck5vZGVzPmtfX0JhY2tpbmdGaWVsZBU8VWRmcz5rX19CYWNraW5nRmllbGQEBDNNaWNyb3NvZnQuU3BhcmsuVXRpbHMuQ29tbWFuZFNlckRlK1VkZldyYXBwZXJOb2RlW10CAAAAKE1pY3Jvc29mdC5TcGFyay5VdGlscy5VZGZTZXJEZStVZGZEYXRhW10CAAAAAgAAAAkDAAAACQQAAAAHAwAAAAABAAAAAQAAAAQxTWljcm9zb2Z0LlNwYXJrLlV0aWxzLkNvbW1hbmRTZXJEZStVZGZXcmFwcGVyTm9kZQIAAAAJBQAAAAcEAAAAAAEAAAABAAAABCZNaWNyb3NvZnQuU3BhcmsuVXRpbHMuVWRmU2VyRGUrVWRmRGF0YQIAAAAJBgAAAAUFAAAAMU1pY3Jvc29mdC5TcGFyay5VdGlscy5Db21tYW5kU2VyRGUrVWRmV3JhcHBlck5vZGUDAAAAGTxUeXBlTmFtZT5rX19CYWNraW5nRmllbGQcPE51bUNoaWxkcmVuPmtfX0JhY2tpbmdGaWVsZBc8SGFzVWRmPmtfX0JhY2tpbmdGaWVsZAEAAAgBAgAAAAYHAAAA/wFNaWNyb3NvZnQuU3BhcmsuU3FsLlBpY2tsaW5nVWRmV3JhcHBlcmAyW1tTeXN0ZW0uU3RyaW5nLCBTeXN0ZW0uUHJpdmF0ZS5Db3JlTGliLCBWZXJzaW9uPTQuMC4wLjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV0sW1N5c3RlbS5TdHJpbmcsIFN5c3RlbS5Qcml2YXRlLkNvcmVMaWIsIFZlcnNpb249NC4wLjAuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXV0BAAAAAQUGAAAAJk1pY3Jvc29mdC5TcGFyay5VdGlscy5VZGZTZXJEZStVZGZEYXRhAwAAABk8VHlwZURhdGE+a19fQmFja2luZ0ZpZWxkGzxNZXRob2ROYW1lPmtfX0JhY2tpbmdGaWVsZBs8VGFyZ2V0RGF0YT5rX19CYWNraW5nRmllbGQEAQQnTWljcm9zb2Z0LlNwYXJrLlV0aWxzLlVkZlNlckRlK1R5cGVEYXRhAgAAAClNaWNyb3NvZnQuU3BhcmsuVXRpbHMuVWRmU2VyRGUrVGFyZ2V0RGF0YQIAAAACAAAACQgAAAAGCQAAAAw8TWFpbj5iX18wXzAJCgAAAAUIAAAAJ01pY3Jvc29mdC5TcGFyay5VdGlscy5VZGZTZXJEZStUeXBlRGF0YQMAAAAVPE5hbWU+a19fQmFja2luZ0ZpZWxkHTxBc3NlbWJseU5hbWU+a19fQmFja2luZ0ZpZWxkITxBc3NlbWJseUZpbGVOYW1lPmtfX0JhY2tpbmdGaWVsZAEBAQIAAAAGCwAAABlVZGZTZXJpYWxpemVyLlByb2dyYW0rPD5jBgwAAABEVWRmU2VyaWFsaXplciwgVmVyc2lvbj0xLjAuMC4wLCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPW51bGwGDQAAABFVZGZTZXJpYWxpemVyLmRsbAUKAAAAKU1pY3Jvc29mdC5TcGFyay5VdGlscy5VZGZTZXJEZStUYXJnZXREYXRhAgAAABk8VHlwZURhdGE+a19fQmFja2luZ0ZpZWxkFzxGaWVsZHM+a19fQmFja2luZ0ZpZWxkBAQnTWljcm9zb2Z0LlNwYXJrLlV0aWxzLlVkZlNlckRlK1R5cGVEYXRhAgAAACpNaWNyb3NvZnQuU3BhcmsuVXRpbHMuVWRmU2VyRGUrRmllbGREYXRhW10CAAAAAgAAAAkOAAAACgEOAAAACAAAAAkLAAAACQwAAAAGEQAAABFVZGZTZXJpYWxpemVyLmRsbAs= \
 "\"string\"" \
-c:\dotnet-spark-worker\Microsoft.Spark.Worker-0.4.0\Microsoft.Spark.Worker.exe \
+c:\dotnet-spark-worker\Microsoft.Spark.Worker-0.12.1\Microsoft.Spark.Worker.exe \
 %SPARK_HOME%\examples\src\main\resources\people.json
 ```
-9. This should output the following:
+6. This should output the following:
+```
++---------------+
+| udf_name(name)|
++---------------+
+|my udf: Michael|
+|   my udf: Andy|
+| my udf: Justin|
++---------------+
+```
+
+## Invoke C# UDF from Python
+1. Check `/src/python/main.py` to see how the C# UDF is injected.
+2. Copy the `UdfSerializer.dll` built in 3) to the current working directory (run from the root of the repo). This step is important since this dll will contatin the IL bytes for the UDF defined.
+```
+cp src\csharp\UdfSerializer\bin\Debug\netcoreapp3.1\UdfSerializer.dll .
+```
+4. Download and unzip the worker binaries from https://github.com/dotnet/spark/releases/tag/v0.12.1. I used .NET Core for Windows for this example and unzipped to c:\dotnet-spark-worker.
+5. Run the following `spark-submit` (run from the root of the repo):
+```
+%SPARK_HOME%\bin\spark-submit.cmd \
+main.py \
+AAAAA1JvdwAAAANSb3cAAAABTgAABnsAAQAAAP////8BAAAAAAAAAAwCAAAAUk1pY3Jvc29mdC5TcGFyaywgVmVyc2lvbj0wLjQuMC4wLCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPWNjN2IxM2ZmY2QyZGRkNTEFAQAAADFNaWNyb3NvZnQuU3BhcmsuVXRpbHMuQ29tbWFuZFNlckRlK1VkZldyYXBwZXJEYXRhAgAAACA8VWRmV3JhcHBlck5vZGVzPmtfX0JhY2tpbmdGaWVsZBU8VWRmcz5rX19CYWNraW5nRmllbGQEBDNNaWNyb3NvZnQuU3BhcmsuVXRpbHMuQ29tbWFuZFNlckRlK1VkZldyYXBwZXJOb2RlW10CAAAAKE1pY3Jvc29mdC5TcGFyay5VdGlscy5VZGZTZXJEZStVZGZEYXRhW10CAAAAAgAAAAkDAAAACQQAAAAHAwAAAAABAAAAAQAAAAQxTWljcm9zb2Z0LlNwYXJrLlV0aWxzLkNvbW1hbmRTZXJEZStVZGZXcmFwcGVyTm9kZQIAAAAJBQAAAAcEAAAAAAEAAAABAAAABCZNaWNyb3NvZnQuU3BhcmsuVXRpbHMuVWRmU2VyRGUrVWRmRGF0YQIAAAAJBgAAAAUFAAAAMU1pY3Jvc29mdC5TcGFyay5VdGlscy5Db21tYW5kU2VyRGUrVWRmV3JhcHBlck5vZGUDAAAAGTxUeXBlTmFtZT5rX19CYWNraW5nRmllbGQcPE51bUNoaWxkcmVuPmtfX0JhY2tpbmdGaWVsZBc8SGFzVWRmPmtfX0JhY2tpbmdGaWVsZAEAAAgBAgAAAAYHAAAA/wFNaWNyb3NvZnQuU3BhcmsuU3FsLlBpY2tsaW5nVWRmV3JhcHBlcmAyW1tTeXN0ZW0uU3RyaW5nLCBTeXN0ZW0uUHJpdmF0ZS5Db3JlTGliLCBWZXJzaW9uPTQuMC4wLjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZV0sW1N5c3RlbS5TdHJpbmcsIFN5c3RlbS5Qcml2YXRlLkNvcmVMaWIsIFZlcnNpb249NC4wLjAuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj03Y2VjODVkN2JlYTc3OThlXV0BAAAAAQUGAAAAJk1pY3Jvc29mdC5TcGFyay5VdGlscy5VZGZTZXJEZStVZGZEYXRhAwAAABk8VHlwZURhdGE+a19fQmFja2luZ0ZpZWxkGzxNZXRob2ROYW1lPmtfX0JhY2tpbmdGaWVsZBs8VGFyZ2V0RGF0YT5rX19CYWNraW5nRmllbGQEAQQnTWljcm9zb2Z0LlNwYXJrLlV0aWxzLlVkZlNlckRlK1R5cGVEYXRhAgAAAClNaWNyb3NvZnQuU3BhcmsuVXRpbHMuVWRmU2VyRGUrVGFyZ2V0RGF0YQIAAAACAAAACQgAAAAGCQAAAAw8TWFpbj5iX18wXzAJCgAAAAUIAAAAJ01pY3Jvc29mdC5TcGFyay5VdGlscy5VZGZTZXJEZStUeXBlRGF0YQMAAAAVPE5hbWU+a19fQmFja2luZ0ZpZWxkHTxBc3NlbWJseU5hbWU+a19fQmFja2luZ0ZpZWxkITxBc3NlbWJseUZpbGVOYW1lPmtfX0JhY2tpbmdGaWVsZAEBAQIAAAAGCwAAABlVZGZTZXJpYWxpemVyLlByb2dyYW0rPD5jBgwAAABEVWRmU2VyaWFsaXplciwgVmVyc2lvbj0xLjAuMC4wLCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPW51bGwGDQAAABFVZGZTZXJpYWxpemVyLmRsbAUKAAAAKU1pY3Jvc29mdC5TcGFyay5VdGlscy5VZGZTZXJEZStUYXJnZXREYXRhAgAAABk8VHlwZURhdGE+a19fQmFja2luZ0ZpZWxkFzxGaWVsZHM+a19fQmFja2luZ0ZpZWxkBAQnTWljcm9zb2Z0LlNwYXJrLlV0aWxzLlVkZlNlckRlK1R5cGVEYXRhAgAAACpNaWNyb3NvZnQuU3BhcmsuVXRpbHMuVWRmU2VyRGUrRmllbGREYXRhW10CAAAAAgAAAAkOAAAACgEOAAAACAAAAAkLAAAACQwAAAAGEQAAABFVZGZTZXJpYWxpemVyLmRsbAs= \
+"\"string\"" \
+c:\dotnet-spark-worker\Microsoft.Spark.Worker-0.12.1\Microsoft.Spark.Worker.exe \
+%SPARK_HOME%\examples\src\main\resources\people.json
+```
+6. This should output the following:
 ```
 +---------------+
 | udf_name(name)|
