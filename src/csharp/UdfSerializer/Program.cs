@@ -29,7 +29,7 @@ namespace UdfSerializer
 
         public object CallNonStaticJavaMethod(JvmObjectReference objectId, string methodName, object arg0, object arg1)
         {
-            throw new NotImplementedException();
+            return null;
         }
 
         public object CallNonStaticJavaMethod(JvmObjectReference objectId, string methodName, params object[] args)
@@ -65,6 +65,11 @@ namespace UdfSerializer
 
                 return new JvmObjectReference("createPythonFunction", this);
             }
+            else if (className == "org.apache.spark.deploy.dotnet.DotnetRunner" && 
+                methodName == "SPARK_VERSION")
+            {
+                return "2.4";
+            }
 
             throw new NotImplementedException();
         }
@@ -77,7 +82,7 @@ namespace UdfSerializer
 
     class Program
     {
-        static void Main(string[] args)
+        static void Main(string[] _)
         {
             SparkEnvironment.JvmBridge = new MockJvmBridge();
             Udf<string, string>(str => "my udf: " + str);
