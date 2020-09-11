@@ -9,17 +9,15 @@ def main(args):
     spark = SparkSession.builder.master("local").getOrCreate()
 
     udfBase64Encoded = args[0] # Produced by the tool
-    udfReturnType = "\"string\"" # args[1] # Produced by the tool
+    udfReturnType = args[1] # Produced by the tool
     workerPath = args[2]
 
-    print(udfBase64Encoded)
-
-    udfBytes = udfBase64Encoded.encode('utf-8')
+    udfBytes = bytearray(base64.b64decode(udfBase64Encoded.encode("UTF-8")))
 
     env = { "DOTNET_WORKER_SPARK_VERSION": spark.version }
 
     python_func = spark.sparkContext._jvm.PythonFunction(udfBytes, env, [], workerPath,
-        "0.12.1", [], None) # spark.sparkContext._javaAccumulator)
+        "0.12.1", [], spark.sparkContext._javaAccumulator)
 
     jdt = spark._jsparkSession.parseDataType(udfReturnType)
 
